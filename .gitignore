@@ -1,0 +1,29 @@
+# Build artifacts
+sync-it
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+*.dll
+
+# Dependencies
+vendor/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+
+# Local configuration
+.claude/
+
+# Uploads directory (runtime data)
+uploads/
+
+# Go build cache
+go.sum

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sync-It</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sync-It</h1>
+            <div class="server-info">
+                <span class="label">Connect from other devices:</span>
+                <code id="server-address">Loading...</code>
+            </div>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <div id="drop-zone" class="drop-zone">
+                    <div class="drop-zone-content">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <p>Drag & drop files here</p>
+                        <span class="or">or</span>
+                        <label class="file-input-label">
+                            <input type="file" id="file-input" multiple>
+                            Browse files
+                        </label>
+                    </div>
+                </div>
+                <div id="upload-progress" class="upload-progress hidden">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <span class="progress-text">Uploading...</span>
+                </div>
+            </section>
+
+            <section class="files-section">
+                <h2>Uploaded Files</h2>
+                <div id="file-list" class="file-list">
+                    <p class="empty-state">No files uploaded yet</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
