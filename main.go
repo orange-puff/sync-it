@@ -10,12 +10,13 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 var (
-	port      int
-	localIP   string
-	storage   *FileStorage
+	port    int
+	localIP string
+	storage *FileStorage
 )
 
 func getLocalIP() string {
@@ -50,6 +51,24 @@ func main() {
 		log.Printf("Warning: failed to clear files on startup: %v", err)
 	}
 
+	// Start cleanup goroutine
+	stopCleanup := make(chan bool)
+	go func() {
+		ticker := time.NewTicker(1 * time.Minute)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				if err := storage.DeleteExpiredFiles(); err != nil {
+					log.Printf("Error cleaning up expired files: %v", err)
+				}
+			case <-stopCleanup:
+				return
+			}
+		}
+	}()
+
 	// API routes
 	http.HandleFunc("/api/info", handleInfo)
 	http.HandleFunc("/api/upload", handleUpload)
@@ -72,6 +91,9 @@ func main() {
 	go func() {
 		<-quit
 		fmt.Println("\nShutting down server...")
+
+		// Stop cleanup goroutine
+		close(stopCleanup)
 
 		// Clear all files on shutdown
 		if err := storage.ClearAllFiles(); err != nil {

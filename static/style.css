@@ -58,6 +58,42 @@ h1 {
     margin-bottom: 40px;
 }
 
+.expiration-selector {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    background: #fff;
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.expiration-selector label {
+    font-size: 0.95rem;
+    color: #1d1d1f;
+    font-weight: 500;
+}
+
+.expiration-selector input[type="number"] {
+    padding: 8px 12px;
+    border: 1px solid #d2d2d7;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #1d1d1f;
+    width: 100px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.expiration-selector input[type="number"]:focus {
+    border-color: #0071e3;
+}
+
+.expiration-selector input[type="number"]:hover {
+    border-color: #86868b;
+}
+
 .drop-zone {
     background: #fff;
     border: 2px dashed #d2d2d7;

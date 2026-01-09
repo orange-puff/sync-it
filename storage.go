@@ -18,6 +18,7 @@ type FileMetadata struct {
 	Name       string    `json:"name"`
 	Size       int64     `json:"size"`
 	UploadedAt time.Time `json:"uploadedAt"`
+	ExpiresAt  time.Time `json:"expiresAt"`
 }
 
 type FileStorage struct {
@@ -84,7 +85,7 @@ func generateID() string {
 	return hex.EncodeToString(bytes)
 }
 
-func (fs *FileStorage) SaveFile(filename string, r io.Reader) (*FileMetadata, error) {
+func (fs *FileStorage) SaveFile(filename string, r io.Reader, expirationHours int) (*FileMetadata, error) {
 	fs.mu.Lock()
 	defer fs.mu.Unlock()
 
@@ -103,11 +104,15 @@ func (fs *FileStorage) SaveFile(filename string, r io.Reader) (*FileMetadata, er
 		return nil, fmt.Errorf("failed to write file: %w", err)
 	}
 
+	now := time.Now()
+	expiresAt := now.Add(time.Duration(expirationHours) * time.Hour)
+
 	meta := FileMetadata{
 		ID:         id,
 		Name:       filename,
 		Size:       size,
-		UploadedAt: time.Now(),
+		UploadedAt: now,
+		ExpiresAt:  expiresAt,
 	}
 
 	fs.files = append(fs.files, meta)
@@ -192,6 +197,33 @@ func (fs *FileStorage) ClearAllFiles() error {
 	}
 
 	fs.files = []FileMetadata{}
+
+	if err := fs.saveMetadata(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (fs *FileStorage) DeleteExpiredFiles() error {
+	fs.mu.Lock()
+	defer fs.mu.Unlock()
+
+	now := time.Now()
+	var activeFiles []FileMetadata
+
+	for _, meta := range fs.files {
+		if now.After(meta.ExpiresAt) {
+			// File has expired, delete it
+			path := filepath.Join(fs.dir, meta.ID)
+			os.Remove(path)
+		} else {
+			// File is still active
+			activeFiles = append(activeFiles, meta)
+		}
+	}
+
+	fs.files = activeFiles
 
 	if err := fs.saveMetadata(); err != nil {
 		return err

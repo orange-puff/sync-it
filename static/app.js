@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const uploadProgress = document.getElementById('upload-progress');
     const progressFill = uploadProgress.querySelector('.progress-fill');
     const progressText = uploadProgress.querySelector('.progress-text');
+    const expirationHours = document.getElementById('expiration-hours');
 
     // Fetch and display server info
     async function loadServerInfo() {
@@ -45,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="file-info">
                     <div class="file-name">${escapeHtml(file.name)}</div>
-                    <div class="file-meta">${formatSize(file.size)} · ${formatDate(file.uploadedAt)}</div>
+                    <div class="file-meta">${formatSize(file.size)} · ${formatDate(file.uploadedAt)} · Expires ${formatExpiration(file.expiresAt)}</div>
                 </div>
                 <div class="file-actions">
                     <a href="/api/download/${file.id}" class="download-btn" download>Download</a>
@@ -85,10 +86,24 @@ document.addEventListener('DOMContentLoaded', () => {
         return date.toLocaleDateString();
     }
 
+    function formatExpiration(dateStr) {
+        const expiresAt = new Date(dateStr);
+        const now = new Date();
+        const diff = expiresAt - now;
+
+        if (diff < 0) return 'expired';
+        if (diff < 3600000) return 'in ' + Math.ceil(diff / 60000) + ' min';
+        if (diff < 86400000) return 'in ' + Math.ceil(diff / 3600000) + ' hours';
+        if (diff < 172800000) return 'in 1 day';
+
+        return 'in ' + Math.ceil(diff / 86400000) + ' days';
+    }
+
     // Upload file
     async function uploadFile(file) {
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('expirationHours', expirationHours.value);
 
         uploadProgress.classList.remove('hidden');
         progressFill.style.width = '0%';

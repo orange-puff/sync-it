@@ -45,7 +45,14 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	meta, err := storage.SaveFile(header.Filename, file)
+	expirationHours := 24 // Default to 24 hours
+	if expStr := r.FormValue("expirationHours"); expStr != "" {
+		if exp, err := json.Number(expStr).Int64(); err == nil && exp > 0 {
+			expirationHours = int(exp)
+		}
+	}
+
+	meta, err := storage.SaveFile(header.Filename, file, expirationHours)
 	if err != nil {
 		http.Error(w, "Failed to save file", http.StatusInternalServerError)
 		return
