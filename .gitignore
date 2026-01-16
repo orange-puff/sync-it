@@ -27,3 +27,5 @@ uploads/
 
 # Go build cache
 go.sum
+
+*.log

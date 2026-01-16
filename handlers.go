@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strings"
 )
@@ -25,7 +26,7 @@ func handleInfo(w http.ResponseWriter, r *http.Request) {
 		IP:   localIP,
 		Port: port,
 	}
-
+	slog.Info("Info Response", "ip", localIP, "port", port)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
@@ -40,6 +41,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	file, header, err := r.FormFile("file")
 	if err != nil {
+		slog.Error("Failed to read file", "filename", header.Filename)
 		http.Error(w, "Failed to read file", http.StatusBadRequest)
 		return
 	}
@@ -54,6 +56,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	meta, err := storage.SaveFile(header.Filename, file, expirationHours)
 	if err != nil {
+		slog.Error("Failed to save file", "filename", header.Filename)
 		http.Error(w, "Failed to save file", http.StatusInternalServerError)
 		return
 	}

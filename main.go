@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -38,17 +38,34 @@ func main() {
 	flag.IntVar(&port, "port", 80, "Port to run the server on")
 	flag.Parse()
 
+	// Configure logging to file
+	logFile, logErr := os.OpenFile("sync-it.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if logErr != nil {
+		slog.Error("Failed to open log file", "error", logErr)
+		os.Exit(1)
+	}
+	defer logFile.Close()
+
+	// Create a JSON handler that writes to the log file
+	logger := slog.New(slog.NewJSONHandler(logFile, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(logger)
+
+	slog.Info("Server starting")
+
 	localIP = getLocalIP()
 
 	var err error
 	storage, err = NewFileStorage("./uploads")
 	if err != nil {
-		log.Fatalf("Failed to initialize storage: %v", err)
+		slog.Error("Failed to initialize storage", "error", err)
+		os.Exit(1)
 	}
 
 	// Clear all files on startup
 	if err := storage.ClearAllFiles(); err != nil {
-		log.Printf("Warning: failed to clear files on startup: %v", err)
+		slog.Warn("Failed to clear files on startup", "error", err)
 	}
 
 	// Start cleanup goroutine
@@ -61,7 +78,7 @@ func main() {
 			select {
 			case <-ticker.C:
 				if err := storage.DeleteExpiredFiles(); err != nil {
-					log.Printf("Error cleaning up expired files: %v", err)
+					slog.Error("Error cleaning up expired files", "error", err)
 				}
 			case <-stopCleanup:
 				return
@@ -97,11 +114,11 @@ func main() {
 
 		// Clear all files on shutdown
 		if err := storage.ClearAllFiles(); err != nil {
-			log.Printf("Warning: failed to clear files on shutdown: %v", err)
+			slog.Warn("Failed to clear files on shutdown", "error", err)
 		}
 
 		if err := server.Shutdown(context.Background()); err != nil {
-			log.Printf("Server shutdown error: %v", err)
+			slog.Error("Server shutdown error", "error", err)
 		}
 		close(done)
 	}()
@@ -111,7 +128,8 @@ func main() {
 	fmt.Printf("Network access: http://%s:%d\n", localIP, port)
 
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
-		log.Fatalf("Server failed: %v", err)
+		slog.Error("Server failed", "error", err)
+		os.Exit(1)
 	}
 
 	<-done
